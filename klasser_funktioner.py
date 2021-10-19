@@ -68,7 +68,7 @@ class Kassa():
                 return self._kvittoRad      
 
 
-# Funktioner
+# Funktioner utanför klass
 def getInputBetween(startval: int, endval: int)->int:
     while True:
         try:
