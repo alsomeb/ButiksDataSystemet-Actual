@@ -1,0 +1,9 @@
+100,13.00,kilopris,Bananer
+200,35.50,styckpris,Kaffe
+300,19.50,styckpris,Avocado
+400,135.00,kilopris,Kycklingfile
+500,18.50,styckpris,Chokladkaka
+600,11.50,styckpris,Piggelin
+700,12.50,styckpris,Ahlgrens bilar
+800,12.50,styckpris,Vaniljfil
+900,24.50,kilopris,Apelsin
