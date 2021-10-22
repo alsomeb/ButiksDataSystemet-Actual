@@ -1,4 +1,5 @@
 from datetime import datetime
+import os
 
 class Produkt:
     def __init__(self, produktid, pris, typ, namn):
@@ -15,6 +16,9 @@ class Produkt:
 
     def GetNamn(self):
         return self._namn
+    
+    def SetNamn(self, namn:str):
+        self._namn = namn
 
 
 class Kassa():
@@ -65,10 +69,27 @@ class Kassa():
         for p in self._produkter:
             if p.GetProduktId() == id:
                 self._kvittoRad.append(f"{p.GetNamn()} {antal} * {p.GetPrice()} = {total}")
-                return self._kvittoRad      
+                return self._kvittoRad    
+
+    def ShowAllProducts(self)->list:
+        produkter = []
+        for produkt in self._produkter:
+            produkter.append(f"{produkt.GetNamn()}")
+        return produkter
+
+    def FindProduktNamn(self, namn:str)->bool:
+        for i in self._produkter:
+            if i.GetNamn() == namn:
+                return True
+        return False
+
+    def ChangeProduktNamn(self, namn:str, nyttNamn:str):
+        for produkt in self._produkter:
+            if produkt.GetNamn() == namn:
+                produkt.SetNamn(nyttNamn)
 
 
-# Funktioner utanför klass
+# Andra Funktioner
 def getInputBetween(startval: int, endval: int)->int:
     while True:
         try:
@@ -115,7 +136,6 @@ def PrintShoppingCart(tid:str, shoppinglista:list, total_price_receipt:float):
             print(rad)
         print(f"Total: {total_price_receipt}")
 
-
 def GetReceiptNumber():
     with open("Kvittonr.txt", "r") as kvittoFil:
         number = kvittoFil.readline()
@@ -134,3 +154,80 @@ def SaveReceipt(kvitto:list, total:float, tid:str):
             receiptFile.write(f"{str(line)}\n")
         receiptFile.write(f"Total: {str(total)} KR\n")
         receiptFile.write("\n")
+
+# Funktioner admin
+def FileOpen(filename:str)->str:
+    with open(filename) as file:
+        lines = file.readlines()
+        return lines
+
+def listSpecReceipt(date:str)->str:
+    for file in os.listdir("."):
+        if file.endswith(f"{date}.txt"):
+            return file
+
+
+def findFile(date:str)->bool:
+    for file in os.listdir("."):
+        if file.endswith(f"{date}.txt"):
+            return True
+    return False
+
+def receiptAdminSearch(input_str)->str:
+    if len(input_str) < 8 or input_str.isnumeric() == False:
+        print("Fel datum format, format(yyyymmdd)")
+    elif findFile(input_str) == False:
+        print("Kvittonr finns ej!")
+    else:
+        file_located = listSpecReceipt(input_str)
+        current_file = FileOpen(f"{file_located}")
+        for lines in current_file:
+            if lines.startswith("KVITTO:") or lines.startswith("Total:"):
+                print(lines)
+        fullreceipt = input("Vill du se fullständigt kvitto från alla den dagen? y/n: ").lower()
+        if fullreceipt == "y":
+            for lines in current_file:
+                print(lines)
+
+def printAllProductNames(kassasystemet:object):
+    allProducts = kassasystemet.ShowAllProducts()
+    for produkt in allProducts:
+        print(produkt)
+
+def admin(kassasystemet:object): #Objektet inskickat i funktionen
+    while True:
+        print()
+        print("1. Sök kvitto")
+        print("2. Ändra namn produkt")
+        print("3. Ändra pris produkt")
+        print("4. Lägg till CampaignPrice på produkt")
+        print("0. Återgå huvudmeny")
+
+        sel = getInputBetween(0,4)
+        if sel == 0:
+            return
+
+        if sel == 1:
+            input_str = input("\nAnge datum, tex 20211020: ")
+            receiptAdminSearch(input_str)
+        
+        if sel == 2:
+            print()
+            printAllProductNames(kassasystemet)
+            val = input("Ange namn på produkt du vill ändra namn på: ").capitalize()
+            if kassasystemet.FindProduktNamn(val) == True:
+                nyttNamn = input("Ange nytt namn: ").capitalize()
+                if kassasystemet.FindProduktNamn(nyttNamn) == False:
+                    with open("Produkter.txt", "r") as produktfil:
+                        filedata = produktfil.read()
+                        filedata = filedata.replace(val,nyttNamn)
+                    with open("Produkter.txt", "w") as produktfil:
+                        produktfil.write(filedata)
+                    kassasystemet.ChangeProduktNamn(val,nyttNamn) #Så man inte behöver starta om för ändringar live
+                else:
+                    print("Namnet du angav finns redan")
+            else:
+                print("Produkt med det namnet finns inte, kontrollera stavning")
+        
+        if sel == 3:
+            pass #ATT GÖRA
