@@ -20,6 +20,9 @@ class Produkt:
     def SetNamn(self, namn:str):
         self._namn = namn
 
+    def SetPrice(self, price:float):
+        self._pris = price
+
 
 class Kassa():
     def __init__(self):
@@ -47,7 +50,7 @@ class Kassa():
         for i in self._produkter:
             if i.GetProduktId() == id:
                 return True
-        return None
+        return False
 
     def KvittoRadTotal(self, id:str, antal:float):
         for i in self._produkter:
@@ -76,12 +79,29 @@ class Kassa():
         for produkt in self._produkter:
             produkter.append(f"{produkt.GetNamn()}")
         return produkter
+    
+
+    def ShowAllProductsPrices(self)->list:
+        produkter = []
+        for produkt in self._produkter:
+            produkter.append(f"ID: {produkt.GetProduktId()}, {produkt.GetNamn()} - Pris: {produkt.GetPrice()}")
+        return produkter
 
     def FindProduktNamn(self, namn:str)->bool:
         for i in self._produkter:
             if i.GetNamn() == namn:
                 return True
         return False
+
+    def FindProduktPris(self, id:str)->float:
+        for produkt in self._produkter:
+            if produkt.GetProduktId() == id:
+                return produkt.GetPrice()
+
+    def ChangeProduktPrice(self, id:str, newprice:float):
+        for produkt in self._produkter:
+            if produkt.GetProduktId() == id:
+                produkt.SetPrice(newprice)
 
     def ChangeProduktNamn(self, namn:str, nyttNamn:str):
         for produkt in self._produkter:
@@ -194,6 +214,35 @@ def printAllProductNames(kassasystemet:object):
     for produkt in allProducts:
         print(produkt)
 
+def printAllProductPrices(kassasystemet:object):
+    allProductsPrices = kassasystemet.ShowAllProductsPrices()
+    for produkt in allProductsPrices:
+        print(produkt)
+
+def is_number_float(string:str)->bool:
+    try:
+        float(string)
+        return True
+    except ValueError:
+        return False
+
+def ChangeNameProductMenu(kassasystemet:object):
+            printAllProductNames(kassasystemet)
+            val = input("Ange namn på produkt du vill ändra namn på: ").capitalize()
+            if kassasystemet.FindProduktNamn(val) == True:
+                nyttNamn = input("Ange nytt namn: ").capitalize()
+                if kassasystemet.FindProduktNamn(nyttNamn) == False:
+                    with open("Produkter.txt", "r") as produktfil:
+                        filedata = produktfil.read()
+                        filedata = filedata.replace(val,nyttNamn)
+                    with open("Produkter.txt", "w") as produktfil:
+                        produktfil.write(filedata)
+                    kassasystemet.ChangeProduktNamn(val,nyttNamn) #behöver ej starta om för ändringar live i program
+                else:
+                    print("Namnet du angav finns redan")
+            else:
+                print("Produkt med det namnet finns inte, kontrollera stavning")
+
 def admin(kassasystemet:object): #Objektet inskickat i funktionen
     while True:
         print()
@@ -213,21 +262,28 @@ def admin(kassasystemet:object): #Objektet inskickat i funktionen
         
         if sel == 2:
             print()
-            printAllProductNames(kassasystemet)
-            val = input("Ange namn på produkt du vill ändra namn på: ").capitalize()
-            if kassasystemet.FindProduktNamn(val) == True:
-                nyttNamn = input("Ange nytt namn: ").capitalize()
-                if kassasystemet.FindProduktNamn(nyttNamn) == False:
-                    with open("Produkter.txt", "r") as produktfil:
-                        filedata = produktfil.read()
-                        filedata = filedata.replace(val,nyttNamn)
-                    with open("Produkter.txt", "w") as produktfil:
-                        produktfil.write(filedata)
-                    kassasystemet.ChangeProduktNamn(val,nyttNamn) #Så man inte behöver starta om för ändringar live
+            ChangeNameProductMenu(kassasystemet)
+    
+        if sel == 3: # Snygga till
+            printAllProductPrices(kassasystemet)
+            id = input("Ange id på produkt du vill ändra pris på: ")
+            if len(id) != 3 and id.isnumeric() == False:
+                print("3 siffror, tack!")
+            produktens_current_price = kassasystemet.FindProduktPris(id) #hämtar nuvarande pris fr class
+            if kassasystemet.FindProdukt(id) == True:
+                nyttPris = input("Ange nytt pris: ")
+                if is_number_float(nyttPris) == False: # Egengjord checker
+                    print("Inga bokstäver tillåtna")
                 else:
-                    print("Namnet du angav finns redan")
-            else:
-                print("Produkt med det namnet finns inte, kontrollera stavning")
-        
-        if sel == 3:
-            pass #ATT GÖRA
+                    with open("produkter.txt", "r") as produktfil:
+                        filedata = produktfil.read()
+                        for line in filedata:
+                            if line.startswith(id):
+                                filedata.replace(produktens_current_price,nyttPris)
+                        new = filedata.replace(str(produktens_current_price),nyttPris)
+                    with open("produkter.txt", "w") as produktfil:
+                        produktfil.write(new)
+                    kassasystemet.ChangeProduktPrice(id,float(nyttPris)) #Upd priset live i programmet även
+
+        if sel == 4:
+            pass #Att göra
