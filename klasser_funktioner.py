@@ -405,10 +405,10 @@ def admin(kassasystemet:object): #Objektet inskickat i funktionen
             print()
             ChangeNameProductMenu(kassasystemet)
     
-        if sel == 3: # Snygga till, kanske en fin funk ?
+        if sel == 3:
             print()
             ChangePriceMenu(kassasystemet)
 
-        if sel == 4: #Snygga till
+        if sel == 4:
             print()
             ChangeCampDateMenu(kassasystemet)
