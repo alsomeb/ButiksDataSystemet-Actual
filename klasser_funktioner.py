@@ -412,38 +412,3 @@ def admin(kassasystemet:object): #Objektet inskickat i funktionen
         if sel == 4: #Snygga till
             print()
             ChangeCampDateMenu(kassasystemet)
-            # ShowAllCampDates(kassasystemet)
-            # id_prod = input("Ange ID på produkt du vill ändra datum för: ").capitalize()
-            # if len(id_prod) != 3 or id_prod.isnumeric() == False:
-            #     print("3 siffror, tack!")
-            # produktens_current_start = kassasystemet.FindProduktCampStart(id_prod) #hämtar fr class nuvrande datum
-            # produktens_current_slut = kassasystemet.FindProduktCampEnd(id_prod)
-            # if kassasystemet.FindProdukt(id_prod) == True:
-            #     nyttStartDatum = input("Ange Startdatum i format YYYY-MM-DD: ")
-            #     nyttSlutDatum = input("Ange Slutdatum i format YYYY-MM-DD: ")  
-            #     if isDate(nyttStartDatum) == True and isDate(nyttSlutDatum) == True: # Egen checker på date
-            #         with open("produkter.txt", "r") as prodfile:
-            #             newlines = []
-            #             for line in prodfile.readlines(): #Startdatum
-            #                 if line.startswith(id_prod):
-            #                     newlines.append(line.replace(produktens_current_start,nyttStartDatum))
-            #                 else:
-            #                     newlines.append(line)
-            #         with open("produkter.txt", "w") as prodfile:
-            #             for line in newlines:
-            #                 prodfile.write(line)
-
-            #         with open("produkter.txt", "r") as prodfile: #Slutdatum
-            #             newlines = []
-            #             for line in prodfile.readlines():
-            #                 if line.startswith(id_prod):
-            #                     newlines.append(line.replace(produktens_current_slut,nyttSlutDatum))
-            #                 else:
-            #                     newlines.append(line)
-            #         with open("produkter.txt", "w") as prodfile:
-            #             for line in newlines:
-            #                 prodfile.write(line)
-            #         kassasystemet.ChangeCampStartDate(id_prod, nyttStartDatum) #Updaterar live i programmet
-            #         kassasystemet.ChangeCampEndDate(id_prod, nyttSlutDatum)            
-            #     else:
-            #         print("Fel format, YYYY-MM-DD endast!")
