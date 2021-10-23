@@ -2,19 +2,28 @@ from datetime import datetime
 import os
 
 class Produkt:
-    def __init__(self, produktid, pris, typ, namn):
+    def __init__(self, produktid, pris, typ, namn, CampaignStartDate, CampaignEndDate):
         self._produktid = produktid
         self._pris = float(pris)
         self._typ = typ
         self._namn = namn
+        self._CampaignStartDate = CampaignStartDate
+        self._CampaignEndDate = CampaignEndDate
 
-    def GetProduktId(self):
+    def GetProduktId(self)->str:
         return self._produktid
 
-    def GetPrice(self):
+    def GetPrice(self)->float: #Används för live prisjustering med kampanj
+        if self.isCampaign() == True:
+            price = self._pris / 2
+        else:
+            price = self._pris
+        return price
+
+    def GetNonCampPrice(self)->float: #används för org priset i admin menyn
         return self._pris
 
-    def GetNamn(self):
+    def GetNamn(self)->str:
         return self._namn
     
     def SetNamn(self, namn:str):
@@ -23,13 +32,43 @@ class Produkt:
     def SetPrice(self, price:float):
         self._pris = price
 
+    def getCampaignStartDate(self)->datetime:
+        date_time_str = self._CampaignStartDate 
+        date_time_obj = datetime.strptime(date_time_str, "%Y-%m-%d")
+        return date_time_obj
+
+    def getCampaignStartDateSTRING(self)->str:
+        return self._CampaignStartDate
+    
+    def getCampaignEndDateSTRING(self)->str:
+        return self._CampaignEndDate
+
+    def getCampaignEndDate(self)->datetime:
+        date_time_str = self._CampaignEndDate
+        date_time_obj = datetime.strptime(date_time_str, "%Y-%m-%d")
+        return date_time_obj
+
+    def setCampaignStartDate(self, new:str):
+        self._CampaignStartDate = new
+
+    def setCampaignEndDate(self, new:str):
+        self._CampaignEndDate = new
+
+    def isCampaign(self)->bool:
+        now = datetime.now()
+        start = self.getCampaignStartDate()
+        end = self.getCampaignEndDate()
+        if start <= now <= end: # Kollar ifall now hamnar mellan/= start och end
+            return True
+        return False
+        
 
 class Kassa():
     def __init__(self):
         self._produkter = [] # Innehåller alla produkter
         self._kvittoRad = [] # String Lista = Skriva ut kvittoraderna för användaren
         self._totalsumma = 0
-        self._date = ""
+        self._date = "" #funk GetDate hämtar datum
 
     def SetTotalPriceReceiptZero(self)->int:
         self._totalsumma = 0
@@ -84,8 +123,14 @@ class Kassa():
     def ShowAllProductsPrices(self)->list:
         produkter = []
         for produkt in self._produkter:
-            produkter.append(f"ID: {produkt.GetProduktId()}, {produkt.GetNamn()} - Pris: {produkt.GetPrice()}")
+            produkter.append(f"ID: {produkt.GetProduktId()}, {produkt.GetNamn()} - Pris: {produkt.GetNonCampPrice()}")
         return produkter
+
+    def ShowAllCampaignDates(self)->list:
+        dates = []
+        for produkt in self._produkter:
+            dates.append(f"ID: {produkt.GetProduktId()} Namn: {produkt.GetNamn()}\nStart: {produkt.getCampaignStartDate()}\nSlut: {produkt.getCampaignEndDate()}\n")
+        return dates
 
     def FindProduktNamn(self, namn:str)->bool:
         for i in self._produkter:
@@ -98,6 +143,16 @@ class Kassa():
             if produkt.GetProduktId() == id:
                 return produkt.GetPrice()
 
+    def FindProduktCampStart(self, id:str)->str:
+        for produkt in self._produkter:
+            if produkt.GetProduktId() == id:
+                return produkt.getCampaignStartDateSTRING()
+
+    def FindProduktCampEnd(self, id:str)->str:
+        for produkt in self._produkter:
+            if produkt.GetProduktId() == id:
+                return produkt.getCampaignEndDateSTRING()
+
     def ChangeProduktPrice(self, id:str, newprice:float):
         for produkt in self._produkter:
             if produkt.GetProduktId() == id:
@@ -107,6 +162,16 @@ class Kassa():
         for produkt in self._produkter:
             if produkt.GetNamn() == namn:
                 produkt.SetNamn(nyttNamn)
+
+    def ChangeCampStartDate(self, id:str, nytt:str):
+        for produkt in self._produkter:
+            if produkt.GetProduktId() == id:
+                produkt.setCampaignStartDate(nytt)
+
+    def ChangeCampEndDate(self, id:str, nytt:str):
+        for produkt in self._produkter:
+            if produkt.GetProduktId() == id:
+                produkt.setCampaignEndDate(nytt)
 
 
 # Andra Funktioner
@@ -125,7 +190,7 @@ def ReadProducts(objekt:Kassa):
         lines = file.readlines()
         for line in lines:
             line = line.split(",")
-            objekt.AddProdukt(Produkt(line[0], float(line[1]), line[2], line[3].replace("\n","")))
+            objekt.AddProdukt(Produkt(line[0], float(line[1]), line[2], line[3], line[4], line[5].replace("\n","")))
 
 def nyKund(kassasystemet:object):
     lock_time = False # Låser tiden för ett kvitto, sedan släpper tiden för ny kund när LOOP reset
@@ -243,13 +308,89 @@ def ChangeNameProductMenu(kassasystemet:object):
             else:
                 print("Produkt med det namnet finns inte, kontrollera stavning")
 
+def ShowAllCampDates(kassasystemet:object):
+    allCampaignDates = kassasystemet.ShowAllCampaignDates()
+    for dates in allCampaignDates:
+        print(dates)
+
+def isDate(date_string:str)->bool:
+    date_string = date_string
+    format = "%Y-%m-%d"
+    try:
+        datetime.strptime(date_string, format)
+        return True
+    except ValueError:
+        return False
+
+def ChangePriceMenu(kassasystemet:object):
+    printAllProductPrices(kassasystemet)
+    id = input("Ange id på produkt du vill ändra pris på: ")
+    if len(id) != 3 or id.isnumeric() == False:
+        print("3 siffror, tack!")
+    produktens_current_price = kassasystemet.FindProduktPris(id) #hämtar nuvarande pris fr class
+    if kassasystemet.FindProdukt(id) == True:
+        nyttPris = input("Ange nytt pris: ")
+        if is_number_float(nyttPris) == False: # Egengjord checker
+            print("Inga bokstäver tillåtna")
+        else:
+            with open("produkter.txt", "r") as produktfil:
+                new = []
+                for rad in produktfil.readlines():
+                    if rad.startswith(id):
+                        new.append(rad.replace(str(produktens_current_price),nyttPris))
+                    else:
+                        new.append(rad)
+            with open("produkter.txt", "w") as produktfil:
+                for rad in new:
+                    produktfil.write(rad)
+            kassasystemet.ChangeProduktPrice(id,float(nyttPris)) #Upd priset live i programmet även
+
+def ChangeCampDateMenu(kassasystemet:object):
+    ShowAllCampDates(kassasystemet)
+    id_prod = input("Ange ID på produkt du vill ändra datum för: ").capitalize()
+    if len(id_prod) != 3 or id_prod.isnumeric() == False:
+        print("3 siffror, tack!")
+    produktens_current_start = kassasystemet.FindProduktCampStart(id_prod) #hämtar fr class nuvrande datum
+    produktens_current_slut = kassasystemet.FindProduktCampEnd(id_prod)
+    if kassasystemet.FindProdukt(id_prod) == True:
+        nyttStartDatum = input("Ange Startdatum i format YYYY-MM-DD: ")
+        nyttSlutDatum = input("Ange Slutdatum i format YYYY-MM-DD: ")  
+        if isDate(nyttStartDatum) == True and isDate(nyttSlutDatum) == True: # Egen checker på date
+            with open("produkter.txt", "r") as prodfile:
+                newlines = []
+                for line in prodfile.readlines(): #Startdatum
+                    if line.startswith(id_prod):
+                        newlines.append(line.replace(produktens_current_start,nyttStartDatum))
+                    else:
+                        newlines.append(line)
+            with open("produkter.txt", "w") as prodfile:
+                for line in newlines:
+                    prodfile.write(line)
+
+            with open("produkter.txt", "r") as prodfile: #Slutdatum
+                newlines = []
+                for line in prodfile.readlines():
+                    if line.startswith(id_prod):
+                        newlines.append(line.replace(produktens_current_slut,nyttSlutDatum))
+                    else:
+                        newlines.append(line)
+            with open("produkter.txt", "w") as prodfile:
+                for line in newlines:
+                    prodfile.write(line)
+            kassasystemet.ChangeCampStartDate(id_prod, nyttStartDatum) #Updaterar live i programmet
+            kassasystemet.ChangeCampEndDate(id_prod, nyttSlutDatum)            
+        else:
+            print("Fel format, YYYY-MM-DD endast!")
+
+
+
 def admin(kassasystemet:object): #Objektet inskickat i funktionen
     while True:
         print()
         print("1. Sök kvitto")
         print("2. Ändra namn produkt")
         print("3. Ändra pris produkt")
-        print("4. Lägg till CampaignPrice på produkt")
+        print("4. Ändra Kampanjdatum på produkt")
         print("0. Återgå huvudmeny")
 
         sel = getInputBetween(0,4)
@@ -264,26 +405,45 @@ def admin(kassasystemet:object): #Objektet inskickat i funktionen
             print()
             ChangeNameProductMenu(kassasystemet)
     
-        if sel == 3: # Snygga till
-            printAllProductPrices(kassasystemet)
-            id = input("Ange id på produkt du vill ändra pris på: ")
-            if len(id) != 3 and id.isnumeric() == False:
-                print("3 siffror, tack!")
-            produktens_current_price = kassasystemet.FindProduktPris(id) #hämtar nuvarande pris fr class
-            if kassasystemet.FindProdukt(id) == True:
-                nyttPris = input("Ange nytt pris: ")
-                if is_number_float(nyttPris) == False: # Egengjord checker
-                    print("Inga bokstäver tillåtna")
-                else:
-                    with open("produkter.txt", "r") as produktfil:
-                        filedata = produktfil.read()
-                        for line in filedata:
-                            if line.startswith(id):
-                                filedata.replace(produktens_current_price,nyttPris)
-                        new = filedata.replace(str(produktens_current_price),nyttPris)
-                    with open("produkter.txt", "w") as produktfil:
-                        produktfil.write(new)
-                    kassasystemet.ChangeProduktPrice(id,float(nyttPris)) #Upd priset live i programmet även
+        if sel == 3: # Snygga till, kanske en fin funk ?
+            print()
+            ChangePriceMenu(kassasystemet)
 
-        if sel == 4:
-            pass #Att göra
+        if sel == 4: #Snygga till
+            print()
+            ChangeCampDateMenu(kassasystemet)
+            # ShowAllCampDates(kassasystemet)
+            # id_prod = input("Ange ID på produkt du vill ändra datum för: ").capitalize()
+            # if len(id_prod) != 3 or id_prod.isnumeric() == False:
+            #     print("3 siffror, tack!")
+            # produktens_current_start = kassasystemet.FindProduktCampStart(id_prod) #hämtar fr class nuvrande datum
+            # produktens_current_slut = kassasystemet.FindProduktCampEnd(id_prod)
+            # if kassasystemet.FindProdukt(id_prod) == True:
+            #     nyttStartDatum = input("Ange Startdatum i format YYYY-MM-DD: ")
+            #     nyttSlutDatum = input("Ange Slutdatum i format YYYY-MM-DD: ")  
+            #     if isDate(nyttStartDatum) == True and isDate(nyttSlutDatum) == True: # Egen checker på date
+            #         with open("produkter.txt", "r") as prodfile:
+            #             newlines = []
+            #             for line in prodfile.readlines(): #Startdatum
+            #                 if line.startswith(id_prod):
+            #                     newlines.append(line.replace(produktens_current_start,nyttStartDatum))
+            #                 else:
+            #                     newlines.append(line)
+            #         with open("produkter.txt", "w") as prodfile:
+            #             for line in newlines:
+            #                 prodfile.write(line)
+
+            #         with open("produkter.txt", "r") as prodfile: #Slutdatum
+            #             newlines = []
+            #             for line in prodfile.readlines():
+            #                 if line.startswith(id_prod):
+            #                     newlines.append(line.replace(produktens_current_slut,nyttSlutDatum))
+            #                 else:
+            #                     newlines.append(line)
+            #         with open("produkter.txt", "w") as prodfile:
+            #             for line in newlines:
+            #                 prodfile.write(line)
+            #         kassasystemet.ChangeCampStartDate(id_prod, nyttStartDatum) #Updaterar live i programmet
+            #         kassasystemet.ChangeCampEndDate(id_prod, nyttSlutDatum)            
+            #     else:
+            #         print("Fel format, YYYY-MM-DD endast!")
