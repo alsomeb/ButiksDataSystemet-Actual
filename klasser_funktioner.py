@@ -2,7 +2,7 @@ from datetime import datetime
 import os
 
 class Produkt:
-    def __init__(self, produktid, pris, typ, namn, CampaignStartDate, CampaignEndDate):
+    def __init__(self, produktid:str, pris:float, typ:str, namn:str, CampaignStartDate:str, CampaignEndDate:str):
         self._produktid = produktid
         self._pris = float(pris)
         self._typ = typ
