@@ -347,7 +347,7 @@ def ChangePriceMenu(kassasystemet:object):
 
 def ChangeCampDateMenu(kassasystemet:object):
     ShowAllCampDates(kassasystemet)
-    id_prod = input("Ange ID på produkt du vill ändra datum för: ").capitalize()
+    id_prod = input("Ange ID på produkt du vill ändra datum för: ")
     if len(id_prod) != 3 or id_prod.isnumeric() == False:
         print("3 siffror, tack!")
     produktens_current_start = kassasystemet.FindProduktCampStart(id_prod) #hämtar fr class nuvrande datum
