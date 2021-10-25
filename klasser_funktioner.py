@@ -324,7 +324,7 @@ def isDate(date_string:str)->bool:
 
 def ChangePriceMenu(kassasystemet:object):
     printAllProductPrices(kassasystemet)
-    id = input("Ange id på produkt du vill ändra pris på: ")
+    id = input("Ange id på produkt du vill ändra pris på: ").capitalize()
     if len(id) != 3 or id.isnumeric() == False:
         print("3 siffror, tack!")
     produktens_current_price = kassasystemet.FindProduktPris(id) #hämtar nuvarande pris fr class
